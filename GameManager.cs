@@ -67,18 +67,18 @@ public class GameManager : MonoBehaviour {
     // Use this for initialization
     void Start () {
         net = NetManager.GetInstance;
-        net.RegistNet("Your netID", (object id) => { myid = (int)id;GameMenu.instance.info.text = "You ID:" + id.ToString(); });
+        net.RegistNet("your netId", (object id) => { myid = (int)id;GameMenu.instance.info.text = "Your id:" + id.ToString(); });
         net.onConnectToServer_Stable += delegate (int id) { GameMenu.instance.GoConnect(); };
 
 
 
-        net.RegistNet("ToAll", (object id) => {
+        net.RegistNet("send to all", (object id) => {
             object[] obs = id as object[];
             SendToAll(obs[0].ToString(), obs[1]);
 
         });
 
-        net.RegistNet("ToPlayer", (object id) =>
+        net.RegistNet("send to player", (object id) =>
         {
             object[] obs = id as object[];
             SendToPlayer(obs[0] as Player, obs[1].ToString(), obs[2]);
@@ -86,16 +86,15 @@ public class GameManager : MonoBehaviour {
         });
 
 
-        //Create User
+
         net.onClientConnect += delegate (NetworkConnection conn) {
             Player p = new Player();
             p.id = conn.connectionId;
             players.Add(p);
-            net.SendToNetId(p.id, "Your Net ID", p.id);
+            net.SendToNetId(p.id, "your netId", p.id);
         };
 
-        //Start Game
-        net.RegistNet("Start", (object ob) => {
+        net.RegistNet("start", (object ob) => {
             if (!NetManager.host) { 
             players = ob as List<Player>;
             }
@@ -103,7 +102,7 @@ public class GameManager : MonoBehaviour {
 
 
             });
-        //End turn
+
         net.RegistNet("end", (object ob) =>
         {
             List<Player> ps = players.FindAll(x => !x.dead);
@@ -113,18 +112,18 @@ public class GameManager : MonoBehaviour {
                 if(ps[i].id==nowPlayer.id)
                 { 
                     if(i== ps.Count-1)
-                    { net.SendToNetId(ps[0].id, "Do", new object());
+                    { net.SendToNetId(ps[0].id, "contral", new object());
                         nowPlayer = players[0];
                     }
                     else
-                    { net.SendToNetId(ps[i + 1].id, "Do", new object()); nowPlayer = ps[i+1]; }
+                    { net.SendToNetId(ps[i + 1].id, "contral", new object()); nowPlayer = ps[i+1]; }
                     break;
                 }
             }
 
             if(players.Find(x=>x.id== nowPlayer.id).dead==true)
             {
-                net.SendToNetId(ps[0].id, "Do", new object());
+                net.SendToNetId(ps[0].id, "contral", new object());
                 nowPlayer = ps[0];
             }
 
@@ -136,11 +135,10 @@ public class GameManager : MonoBehaviour {
 
         
 
-        //Synchronize
-        net.RegistNet("Synchronize",Sync_get);
+
+        net.RegistNet("sync",Sync_get);
 
 
-        //Spells
         net.RegistNet("skill change", (object ob) =>
         {
             object[] obs = ob as object[];
@@ -156,7 +154,7 @@ public class GameManager : MonoBehaviour {
         if (NetManager.host)
             net.SendToAllPears(type, ob);
         else
-            net.SendToServer("Send To All", new object[2] { type, ob });
+            net.SendToServer("send to all", new object[2] { type, ob });
     }
 
     public void SendToPlayer(Player p, string type, object ob)
@@ -164,7 +162,7 @@ public class GameManager : MonoBehaviour {
         if (NetManager.host)
             net.SendToNetId(p.id,type, ob);
         else
-            net.SendToServer("Send To Player", new object[3] { p,type, ob });
+            net.SendToServer("send to player", new object[3] { p,type, ob });
 
     }
 
@@ -193,17 +191,17 @@ public class GameManager : MonoBehaviour {
         players.GetRange(0, players.Count / 2).ForEach(x => x.team = 2);
 
 
-        net.SendToAllPears( "Start", players);
+        net.SendToAllPears("start", players);
         nowPlayer = players[0];
         nowPlayer.cards.AddRange(GetCards(1));
         Sync();
-        net.SendToNetId(players[0].id, "Do", new object());
+        net.SendToNetId(players[0].id, "contral", new object());
         
     }
 
     public void Sync()
     {
-        SendToAll("Synchronize", players);
+        SendToAll("sync", players);
 
     }
 
@@ -233,9 +231,9 @@ public class GameManager : MonoBehaviour {
     {
         List<Player>ls= players.FindAll(x => !x.dead);
         if (!ls.Exists(x => x.team == 1))
-            UIContral.getInstance.ShowEnd("The team 1 wins");
+            UIContral.getInstance.ShowEnd("Team 2 win!");
         else if (!ls.Exists(x => x.team == 2))
-            UIContral.getInstance.ShowEnd("The team 2 wins");
+            UIContral.getInstance.ShowEnd("Team 1 win!");
 
     }
 
